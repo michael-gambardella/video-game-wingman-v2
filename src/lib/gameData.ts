@@ -8,7 +8,7 @@ import path from "path";
 import { getEnv } from "./env";
 import type { GameRecord, GameInfo } from "@/types";
 
-const DEFAULT_CSV = "data/games.csv";
+const DEFAULT_CSV = "data/games/Video Games Data.csv";
 
 /**
  * Parse a CSV line into columns (handles quoted fields).
@@ -47,6 +47,8 @@ export function parseGamesCsv(csvText: string): GameRecord[] {
   const publisherIdx = header.indexOf("publisher");
   const developerIdx = header.indexOf("developer");
   const releaseIdx = header.indexOf("release_date");
+  const criticIdx = header.indexOf("critic_score");
+  const salesIdx = header.indexOf("total_sales");
 
   if (titleIdx === -1) return [];
 
@@ -56,14 +58,23 @@ export function parseGamesCsv(csvText: string): GameRecord[] {
     const get = (idx: number) => (idx >= 0 && idx < cols.length ? cols[idx] ?? "" : "");
     const title = get(titleIdx);
     if (!title) continue;
-    records.push({
+    const record: GameRecord = {
       title,
       console: get(consoleIdx),
       genre: get(genreIdx),
       publisher: get(publisherIdx),
       developer: get(developerIdx),
       release_date: get(releaseIdx),
-    });
+    };
+    if (criticIdx >= 0) {
+      const v = get(criticIdx);
+      if (v) record.critic_score = v;
+    }
+    if (salesIdx >= 0) {
+      const v = get(salesIdx);
+      if (v) record.total_sales = v;
+    }
+    records.push(record);
   }
   return records;
 }
@@ -80,8 +91,8 @@ export function formatReleaseDate(dateStr: string): string {
 /**
  * Convert a GameRecord to display-friendly GameInfo.
  */
-export function toGameInfo(record: GameRecord): GameInfo {
-  return {
+export function toGameInfo(record: GameRecord, otherPlatforms?: string[]): GameInfo {
+  const info: GameInfo = {
     title: record.title,
     console: record.console,
     genre: record.genre,
@@ -89,6 +100,10 @@ export function toGameInfo(record: GameRecord): GameInfo {
     developer: record.developer,
     releaseDateFormatted: formatReleaseDate(record.release_date),
   };
+  if (record.critic_score) info.criticScore = record.critic_score;
+  if (record.total_sales) info.totalSales = record.total_sales;
+  if (otherPlatforms?.length) info.otherPlatforms = otherPlatforms;
+  return info;
 }
 
 /**
@@ -155,14 +170,36 @@ export async function loadGameRecords(csvPath?: string): Promise<GameRecord[]> {
 }
 
 /**
+ * Get other platform names from matches, excluding the given console (earliest).
+ */
+function otherPlatformsFromMatches(matches: GameRecord[], excludeConsole: string): string[] {
+  const names = matches
+    .filter((r) => r.console && r.console !== excludeConsole)
+    .map((r) => r.console);
+  return [...new Set(names)];
+}
+
+/**
+ * Build GameInfo from in-memory records (earliest release + other platforms).
+ * Pure; used by findGameByTitle and by tests.
+ */
+export function buildGameContext(records: GameRecord[], title: string): GameInfo | undefined {
+  const earliest = pickEarliestRelease(records, title);
+  if (!earliest) return undefined;
+  const normalized = normalizeTitle(title);
+  const matches = records.filter((r) => normalizeTitle(r.title) === normalized);
+  const other = otherPlatformsFromMatches(matches, earliest.console);
+  return toGameInfo(earliest, other.length ? other : undefined);
+}
+
+/**
  * Find game by title (case-insensitive). When multiple rows match (e.g. same game
- * on several platforms), returns the one with the earliest release date (initial release).
+ * on several platforms), returns the earliest release and lists other platforms.
  */
 export async function findGameByTitle(
   title: string,
   csvPath?: string
 ): Promise<GameInfo | undefined> {
   const records = await loadGameRecords(csvPath);
-  const record = pickEarliestRelease(records, title);
-  return record ? toGameInfo(record) : undefined;
+  return buildGameContext(records, title);
 }
