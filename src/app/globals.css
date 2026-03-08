@@ -88,7 +88,11 @@ body {
   font-weight: 600;
 }
 
-.answer-display__text {
-  margin: 0;
+.answer-display__paragraph {
+  margin: 0 0 0.75rem 0;
   white-space: pre-wrap;
+}
+
+.answer-display__paragraph:last-child {
+  margin-bottom: 0;
 }

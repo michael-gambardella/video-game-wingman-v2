@@ -24,10 +24,15 @@ export function AnswerDisplay({ answer, error, loading }: AnswerDisplayProps) {
   }
 
   if (answer) {
+    const paragraphs = answer.split(/\n\n+/).filter((p) => p.trim());
     return (
       <div className="answer-display answer-display--success">
         <h2 className="answer-display__title">Answer</h2>
-        <p className="answer-display__text">{answer}</p>
+        {paragraphs.map((paragraph, i) => (
+          <p key={i} className="answer-display__paragraph">
+            {paragraph}
+          </p>
+        ))}
       </div>
     );
   }

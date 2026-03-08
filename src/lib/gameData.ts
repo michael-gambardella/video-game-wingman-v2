@@ -6,6 +6,7 @@
 import { readFile } from "fs/promises";
 import path from "path";
 import { getEnv } from "./env";
+import { resolveAlias } from "./titleAliases";
 import type { GameRecord, GameInfo } from "@/types";
 
 const DEFAULT_CSV = "data/games/Video Games Data.csv";
@@ -180,13 +181,39 @@ function otherPlatformsFromMatches(matches: GameRecord[], excludeConsole: string
 }
 
 /**
+ * Resolve a user-supplied title to the canonical form stored in the CSV.
+ * Three passes, in order:
+ *   1. Alias map  — handles abbreviations with no substring relationship
+ *                   (e.g. "GTA V" → "Grand Theft Auto V").
+ *   2. Substring  — handles partial names where the input is contained inside
+ *                   exactly one unique CSV title (e.g. "Skyrim" → "The Elder
+ *                   Scrolls V: Skyrim"). Skipped when ambiguous (multiple titles
+ *                   match) to avoid injecting wrong context.
+ *   3. Original   — return as-is; the exact match in pickEarliestRelease may
+ *                   still succeed, or will correctly return undefined.
+ */
+export function resolveTitle(title: string, records: GameRecord[]): string {
+  const alias = resolveAlias(title);
+  if (alias) return alias;
+
+  const lower = title.toLowerCase().trim();
+  const uniqueTitles = [
+    ...new Set(records.filter((r) => r.title.toLowerCase().includes(lower)).map((r) => r.title)),
+  ];
+  if (uniqueTitles.length === 1) return uniqueTitles[0];
+
+  return title;
+}
+
+/**
  * Build GameInfo from in-memory records (earliest release + other platforms).
  * Pure; used by findGameByTitle and by tests.
  */
 export function buildGameContext(records: GameRecord[], title: string): GameInfo | undefined {
-  const earliest = pickEarliestRelease(records, title);
+  const canonical = resolveTitle(title, records);
+  const earliest = pickEarliestRelease(records, canonical);
   if (!earliest) return undefined;
-  const normalized = normalizeTitle(title);
+  const normalized = normalizeTitle(canonical);
   const matches = records.filter((r) => normalizeTitle(r.title) === normalized);
   const other = otherPlatformsFromMatches(matches, earliest.console);
   return toGameInfo(earliest, other.length ? other : undefined);

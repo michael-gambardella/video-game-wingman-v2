@@ -7,7 +7,7 @@ import OpenAI from "openai";
 import { getEnv } from "./env";
 import type { GameInfo } from "@/types";
 
-const SYSTEM_PROMPT = `You are a helpful video game expert. Answer the user's question about video games accurately and concisely. If you are not sure, say so. Keep answers focused and avoid unnecessary detail unless asked.`;
+const SYSTEM_PROMPT = `You are a helpful video game expert. Answer the user's question about video games accurately and concisely. If you are not sure, say so. Keep answers focused and avoid unnecessary detail unless asked. Respond in plain text only — do not use markdown, asterisks, bullet symbols, or any other formatting syntax.`;
 
 /**
  * Build system message with optional game context (from CSV) to improve accuracy.

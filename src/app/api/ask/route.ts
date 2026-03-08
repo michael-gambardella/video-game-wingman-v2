@@ -6,10 +6,9 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { parseAskBody } from "@/lib/ask/parseBody";
+import { resolveGameContext } from "@/lib/ask/resolveGameContext";
 import { getEnv } from "@/lib/env";
-import { findGameByTitle } from "@/lib/gameData";
 import { askOpenAI } from "@/lib/openai";
-import { extractGameTitleFromQuestion } from "@/lib/question";
 import type { AskResponse, ApiError } from "@/types";
 
 const MAX_QUESTION_LENGTH = 2000;
@@ -45,10 +44,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const gameTitle = extractGameTitleFromQuestion(parsed.question);
-    const gameContext = gameTitle
-      ? await findGameByTitle(gameTitle)
-      : undefined;
+    const gameContext = await resolveGameContext(parsed.question);
 
     const answer = await askOpenAI({
       question: parsed.question,

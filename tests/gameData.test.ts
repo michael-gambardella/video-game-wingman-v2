@@ -8,8 +8,18 @@ import {
   toGameInfo,
   pickEarliestRelease,
   buildGameContext,
+  resolveTitle,
 } from "../src/lib/gameData";
 import type { GameRecord } from "../src/types";
+
+const makeRecord = (title: string, platform = "PS4"): GameRecord => ({
+  title,
+  console: platform,
+  genre: "Action",
+  publisher: "Publisher",
+  developer: "Developer",
+  release_date: "01-01-2020",
+});
 
 describe("parseGamesCsv", () => {
   it("returns empty array for empty content", () => {
@@ -136,6 +146,60 @@ describe("pickEarliestRelease", () => {
   });
 });
 
+describe("resolveTitle", () => {
+  describe("alias pass", () => {
+    it("resolves a known abbreviation to its canonical CSV title", () => {
+      const records = [makeRecord("Grand Theft Auto V")];
+      expect(resolveTitle("GTA V", records)).toBe("Grand Theft Auto V");
+      expect(resolveTitle("gta 5", records)).toBe("Grand Theft Auto V");
+      expect(resolveTitle("RDR2", records)).toBe("Red Dead Redemption 2");
+    });
+
+    it("alias takes precedence over substring matching", () => {
+      // "rdr2" is an alias for "Red Dead Redemption 2"; substring of "rdr2"
+      // could theoretically appear in a CSV title too, but alias wins.
+      const records = [makeRecord("Red Dead Redemption 2"), makeRecord("rdr2 Special Edition")];
+      expect(resolveTitle("RDR2", records)).toBe("Red Dead Redemption 2");
+    });
+  });
+
+  describe("substring pass", () => {
+    it("expands a partial name when exactly one CSV title contains it", () => {
+      const records = [makeRecord("The Elder Scrolls V: Skyrim")];
+      expect(resolveTitle("Skyrim", records)).toBe("The Elder Scrolls V: Skyrim");
+    });
+
+    it("is case-insensitive for substring matching", () => {
+      const records = [makeRecord("The Elder Scrolls V: Skyrim")];
+      expect(resolveTitle("skyrim", records)).toBe("The Elder Scrolls V: Skyrim");
+      expect(resolveTitle("SKYRIM", records)).toBe("The Elder Scrolls V: Skyrim");
+    });
+
+    it("returns the original when the substring matches multiple unique titles (ambiguous)", () => {
+      const records = [makeRecord("Red Dead Redemption"), makeRecord("Red Dead Redemption 2")];
+      expect(resolveTitle("Red Dead", records)).toBe("Red Dead");
+    });
+
+    it("is not ambiguous when multiple rows share the same title (multi-platform)", () => {
+      // "Skyrim" matches both rows but they have the same title — only one unique title.
+      const records = [makeRecord("The Elder Scrolls V: Skyrim", "PS3"), makeRecord("The Elder Scrolls V: Skyrim", "PC")];
+      expect(resolveTitle("Skyrim", records)).toBe("The Elder Scrolls V: Skyrim");
+    });
+  });
+
+  describe("original pass", () => {
+    it("returns the title unchanged when no alias or substring match is found", () => {
+      const records = [makeRecord("Halo 3")];
+      expect(resolveTitle("Unknown Game", records)).toBe("Unknown Game");
+    });
+
+    it("returns the exact title unchanged when it already matches a CSV entry", () => {
+      const records = [makeRecord("Halo 3")];
+      expect(resolveTitle("Halo 3", records)).toBe("Halo 3");
+    });
+  });
+});
+
 describe("buildGameContext", () => {
   it("returns GameInfo with otherPlatforms when multiple rows match same title", () => {
     const records: GameRecord[] = [
@@ -170,5 +234,22 @@ describe("buildGameContext", () => {
     expect(result?.otherPlatforms).toContain("PS4");
     expect(result?.otherPlatforms).toContain("XOne");
     expect(result?.otherPlatforms).toHaveLength(2);
+  });
+
+  it("resolves alias input and returns correct GameInfo", () => {
+    const records = [makeRecord("Grand Theft Auto V")];
+    const result = buildGameContext(records, "GTA V");
+    expect(result?.title).toBe("Grand Theft Auto V");
+  });
+
+  it("resolves partial name via substring and returns correct GameInfo", () => {
+    const records = [makeRecord("The Elder Scrolls V: Skyrim")];
+    const result = buildGameContext(records, "Skyrim");
+    expect(result?.title).toBe("The Elder Scrolls V: Skyrim");
+  });
+
+  it("returns undefined for an unrecognised title", () => {
+    const records = [makeRecord("Halo 3")];
+    expect(buildGameContext(records, "Unknown Game")).toBeUndefined();
   });
 });
