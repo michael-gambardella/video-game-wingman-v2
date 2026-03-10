@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, FormEvent } from "react";
+import styles from "./AskForm.module.css";
 
 export interface AskFormProps {
   onSubmit: (question: string) => Promise<void>;
@@ -28,8 +29,8 @@ export function AskForm({ onSubmit, disabled = false }: AskFormProps) {
   const isDisabled = disabled || submitting || !question.trim();
 
   return (
-    <form onSubmit={handleSubmit} className="ask-form">
-      <label htmlFor="question" className="ask-form__label">
+    <form onSubmit={handleSubmit}>
+      <label htmlFor="question" className={styles.label}>
         Your question about a video game
       </label>
       <textarea
@@ -40,13 +41,13 @@ export function AskForm({ onSubmit, disabled = false }: AskFormProps) {
         rows={3}
         maxLength={MAX_LENGTH}
         disabled={disabled}
-        className="ask-form__input"
+        className={styles.input}
         aria-describedby="question-hint"
       />
-      <p id="question-hint" className="ask-form__hint">
+      <p id="question-hint" className={styles.hint}>
         {question.length} / {MAX_LENGTH}
       </p>
-      <button type="submit" disabled={isDisabled} className="ask-form__submit">
+      <button type="submit" disabled={isDisabled} className={styles.submit}>
         {submitting ? "Getting answer…" : "Ask"}
       </button>
     </form>

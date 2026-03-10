@@ -7,11 +7,13 @@
 
 import { useState, useCallback } from "react";
 import { askApi, AskApiError } from "@/lib/ask/askApi";
+import type { QAPair } from "@/types";
 
 export interface UseAskState {
   answer: string | null;
   error: string | null;
   loading: boolean;
+  history: QAPair[];
 }
 
 export interface UseAskResult extends UseAskState {
@@ -22,6 +24,7 @@ export function useAsk(): UseAskResult {
   const [answer, setAnswer] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [history, setHistory] = useState<QAPair[]>([]);
 
   const ask = useCallback(async (question: string) => {
     setError(null);
@@ -30,6 +33,7 @@ export function useAsk(): UseAskResult {
     try {
       const result = await askApi(question);
       setAnswer(result.answer);
+      setHistory((prev) => [{ question, answer: result.answer }, ...prev]);
     } catch (err) {
       setError(err instanceof AskApiError ? err.message : "Something went wrong.");
     } finally {
@@ -37,5 +41,5 @@ export function useAsk(): UseAskResult {
     }
   }, []);
 
-  return { answer, error, loading, ask };
+  return { answer, error, loading, history, ask };
 }

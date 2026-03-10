@@ -1,0 +1,36 @@
+.answerDisplay {
+  padding: 1rem;
+  border-radius: 6px;
+  font-size: 1rem;
+}
+
+.loading {
+  color: #666;
+  font-style: italic;
+}
+
+.error {
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+
+.success {
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+}
+
+.title {
+  margin: 0 0 0.5rem 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.paragraph {
+  margin: 0 0 0.75rem 0;
+  white-space: pre-wrap;
+}
+
+.paragraph:last-child {
+  margin-bottom: 0;
+}

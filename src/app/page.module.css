@@ -20,10 +20,21 @@
   font-size: 1rem;
 }
 
+.disclaimer {
+  margin: 0.5rem 0 0 0;
+  font-size: 0.8125rem;
+  color: #888;
+  font-style: italic;
+}
+
 .formSection {
   margin-bottom: 2rem;
 }
 
 .answerSection {
   min-height: 2rem;
+}
+
+.historySection {
+  margin-top: 2rem;
 }

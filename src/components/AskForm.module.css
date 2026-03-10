@@ -1,0 +1,47 @@
+.label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  font-size: 0.9375rem;
+}
+
+.input {
+  width: 100%;
+  padding: 0.75rem;
+  font-size: 1rem;
+  font-family: inherit;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  resize: vertical;
+}
+
+.input:focus {
+  outline: 2px solid #0066cc;
+  outline-offset: 2px;
+}
+
+.hint {
+  margin: 0.25rem 0 0.75rem 0;
+  font-size: 0.875rem;
+  color: #666;
+}
+
+.submit {
+  padding: 0.5rem 1.25rem;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #fff;
+  background: #0066cc;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.submit:hover:not(:disabled) {
+  background: #0052a3;
+}
+
+.submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

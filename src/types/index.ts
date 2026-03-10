@@ -31,6 +31,12 @@ export interface GameInfo {
   otherPlatforms?: string[];
 }
 
+/** A completed question/answer pair stored in session history. */
+export interface QAPair {
+  question: string;
+  answer: string;
+}
+
 /** Request body for POST /api/ask */
 export interface AskRequest {
   question: string;
